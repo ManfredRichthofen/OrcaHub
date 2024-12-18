@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 
 interface Book {
@@ -13,8 +13,12 @@ const BookAdder: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [requestedBooks, setRequestedBooks] = useState<string[]>([]);
+  const searchTimeout = useRef<number | null>(null);
 
   const searchBooks = async () => {
+    setLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -23,23 +27,51 @@ const BookAdder: React.FC = () => {
         params: { title: searchTerm },
       });
       setBooks(response.data.books);
-    } catch (err) {
-      console.error('Failed to fetch books.', err)
-      setError("Failed to fetch books.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || "Failed to fetch books.");
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const requestBook = async (book: Book) => {
+    if (requestedBooks.includes(book.olid || "")) return;
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
     try {
       const response = await axios.post("http://localhost:3001/add-book", {
         title: book.title,
         author: book.author,
       });
+      setRequestedBooks([...requestedBooks, book.olid || ""]);
       setSuccess(response.data.message);
-    } catch (err) {
-      console.error('Failed to request book in Readarr.', err)
-      setError("Failed to request book in Readarr.");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.error || "Failed to request book in Readarr.");
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    searchTimeout.current = window.setTimeout(() => {
+      searchBooks();
+    }, 500);
   };
 
   return (
@@ -49,15 +81,10 @@ const BookAdder: React.FC = () => {
           type="text"
           placeholder="Enter book title"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleSearchChange}
           className="p-2 border rounded-md"
         />
-        <button
-          onClick={searchBooks}
-          className="ml-2 px-4 py-2 bg-blue-500 text-white rounded-md"
-        >
-          Search
-        </button>
+        {loading && <span className="ml-2">Loading...</span>}
       </div>
 
       {error && <p className="text-red-500">{error}</p>}
@@ -79,9 +106,14 @@ const BookAdder: React.FC = () => {
             )}
             <button
               onClick={() => requestBook(book)}
-              className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md"
+              className={`mt-4 px-4 py-2 ${
+                requestedBooks.includes(book.olid || "")
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-green-500"
+              } text-white rounded-md`}
+              disabled={requestedBooks.includes(book.olid || "")}
             >
-              Request Book
+              {requestedBooks.includes(book.olid || "") ? "Requested" : "Request Book"}
             </button>
           </div>
         ))}

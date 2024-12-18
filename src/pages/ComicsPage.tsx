@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import Card from "../components/Card";
-import LoadingSpinner from "../components/Spinner"; // Import the spinner component
-import { IconSearch, IconBook2 } from "@tabler/icons-react"; // Import icons
+import LoadingSpinner from "../components/Spinner";
+import { IconSearch, IconBook2 } from "@tabler/icons-react";
 
 interface Comic {
   id: number;
