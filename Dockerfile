@@ -28,6 +28,7 @@ ENV VITE_BACKEND_URL=http://localhost:3001
 
 # Expose the port your app listens on
 EXPOSE 3001
+EXPOSE 4173
 
 # Define the command to run your app
 CMD ["npm", "run", "start"]
