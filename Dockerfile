@@ -23,7 +23,7 @@ ENV KAPOWARR_BASE_URL=https://readarr.jfapp.xyz
 
 
 # Frontend Environment Variables
-VITE_BACKEND_URL=http://localhost:3001
+ENV VITE_BACKEND_URL=http://localhost:3001
 
 # Expose the port your app listens on
 EXPOSE 3000
