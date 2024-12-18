@@ -21,7 +21,7 @@ export const addComicToKapowarr = async (comic) => {
 
     // Send a POST request to Kapowarr's API
     const response = await axios.post(
-      `${KAPOWARR_BASE_URL}/api/v1/comics`,
+      `${KAPOWARR_BASE_URL}/api/comics`,
       payload,
       {
         headers: {

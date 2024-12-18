@@ -16,11 +16,13 @@ const ComicsPage: React.FC = () => {
   const [comics, setComics] = useState<Comic[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false); // Loading state
+  const [requestMessage, setRequestMessage] = useState<string | null>(null); // Feedback for requests
 
   const searchComics = async () => {
     setError(null);
     setComics([]);
-    setLoading(true); // Start loading
+    setLoading(true);
+    setRequestMessage(null);
 
     if (!searchTerm.trim()) {
       setError("Please enter a comic title.");
@@ -34,10 +36,23 @@ const ComicsPage: React.FC = () => {
       });
       setComics(response.data.comics);
     } catch (err) {
-      console.error("Failed to fetch comics. Please try again.", err);
+      console.error("Failed to fetch comics.", err);
       setError("Failed to fetch comics. Please try again.");
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
+    }
+  };
+
+  const requestComic = async (title: string) => {
+    setRequestMessage(null);
+    try {
+      const response = await axios.post("http://localhost:3001/add-comic", {
+        title,
+      });
+      setRequestMessage(response.data.message || `Comic "${title}" requested successfully.`);
+    } catch (err) {
+      console.error("Failed to request comic.", err);
+      setRequestMessage("Failed to request comic. Please try again.");
     }
   };
 
@@ -69,7 +84,7 @@ const ComicsPage: React.FC = () => {
             placeholder="Enter comic title..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleKeyPress} // Trigger search on Enter key
+            onKeyDown={handleKeyPress}
             className="w-full p-3 text-gray-700 dark:text-gray-200 bg-transparent outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <button
@@ -92,6 +107,13 @@ const ComicsPage: React.FC = () => {
         </p>
       )}
 
+      {/* Request Feedback */}
+      {requestMessage && (
+        <p className="text-center text-green-500 dark:text-green-400 font-medium mb-4">
+          {requestMessage}
+        </p>
+      )}
+
       {/* Comics Grid */}
       {!loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -102,7 +124,7 @@ const ComicsPage: React.FC = () => {
               imageUrl={comic.coverUrl}
               description={comic.description}
               actionLabel="Request Comic"
-              onAction={() => console.log(`Requesting comic: ${comic.title}`)}
+              onAction={() => requestComic(comic.title)}
             />
           ))}
         </div>

@@ -69,29 +69,35 @@ app.get('/search-books', async (req, res) => {
 /* ===========================
    ROUTE: REQUEST COMIC (Kapowarr)
    =========================== */
-app.post('/add-comic', async (req, res) => {
-  const { title } = req.body;
-
-  if (!title) {
-    return res.status(400).json({ error: 'Comic title is required.' });
-  }
-
-  try {
-    // Step 1: Fetch comic details from Anilist
-    const comic = await searchComics(title);
-
-    // Step 2: Send fetched data to Kapowarr
-    const kapowarrResponse = await addComicToKapowarr(comic);
-
-    res.json({
-      message: `Comic "${comic.title}" added successfully to Kapowarr.`,
-      kapowarrResponse,
-    });
-  } catch (error) {
-    console.error('Error in /add-comic:', error.message);
-    res.status(500).json({ error: 'Failed to add comic to Kapowarr.' });
-  }
-});
+   app.post('/add-comic', async (req, res) => {
+    const { title } = req.body;
+  
+    if (!title) {
+      return res.status(400).json({ error: 'Comic title is required.' });
+    }
+  
+    try {
+      // Step 1: Fetch comic details from Anilist
+      const comics = await fetchComicsBySearch(title);
+  
+      if (comics.length === 0) {
+        return res.status(404).json({ error: 'No comics found with the given title.' });
+      }
+  
+      const comic = comics[0]; // Use the first result (or enhance logic as needed)
+  
+      // Step 2: Send fetched data to Kapowarr
+      const kapowarrResponse = await addComicToKapowarr(comic);
+  
+      res.json({
+        message: `Comic "${comic.title}" added successfully to Kapowarr.`,
+        kapowarrResponse,
+      });
+    } catch (error) {
+      console.error('Error in /add-comic:', error.message);
+      res.status(500).json({ error: 'Failed to add comic to Kapowarr.' });
+    }
+  });
 
 /* ===========================
    ROUTE: REQUEST BOOK (Readarr)
